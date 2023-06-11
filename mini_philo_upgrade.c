@@ -46,18 +46,25 @@ typedef struct s_table
 
 void	check_n_cleanup(t_table *t, char *s);
 
+int		init_n_check(t_table *t, char **argv);
 int		table_init(t_table *t, char **argv);
 int		fork_init(t_table *t);
 int		philo_init(t_table *t, t_philo *p);
 
 void	set_flag_n_usleep(t_table *t, int n);
 int		get_now_ms(t_table *t, long *now_ms);
-
 void	*routine(void *arg);
+
+int		eat(t_philo *p, t_table *t);
+int		go_to_sleep(t_philo *p, t_table *t);
+int		think(t_philo *p, t_table *t);
+
 void	fork_lock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p);
 void	record_fork_lock(t_philo *p, int right_handed, char c);
 void	fork_unlock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p);
 void	record_fork_unlock(t_philo *p, int right_handed, char c);
+
+//
 
 /**********//**********//**********//**********//**********/
 void	check_n_cleanup(t_table *t, char *s)
@@ -65,9 +72,14 @@ void	check_n_cleanup(t_table *t, char *s)
 	int	i;
 
 	i = 0;
+	while (i < 4)
+	{
+		if (t->check.fork_state[i])
+			pthread_mutex_unlock(&(t->fork[i]));
+		i++;
+	}
 	if (t->check.philo_init)
 	{
-		t->flag = EXTERNAL;
 		while (i < t->check.philo_init)
 			pthread_join(table.philo[i++].me, NULL);
 		i = 0;
@@ -78,7 +90,8 @@ void	check_n_cleanup(t_table *t, char *s)
 			pthread_mutex_destroy(&(t->fork[i++]));
 		i = 0;
 	}
-	printf("%s\n");
+	if (s)
+		printf("%s\n");
 }
 /**********//**********//**********//**********//**********/
 
@@ -89,31 +102,48 @@ int	main(int argc, char **argv)
 	if (argc < 5)
 	{
 		check_n_cleanup(&table, "arguments error");
-		return(EXIT_FAILURE);
-	}
-	if (!table_init(&table, argv))
-	{
-		check_n_cleanup("gettimeofday() error");
 		return (EXIT_FAILURE);
 	}
-	if (!fork_init(&table))
-	{
-		check_n_cleanup("pthread_mutex_init() error");
+	if (!init_n_check(&table, argv))
 		return (EXIT_FAILURE);
-	}
-	if (!philo_init(&table, &(table.philo)));
-	{
-		check_n_cleanup("pthread_create() error");
-		return (EXIT_FAILURE);
-	}
 	//monitering//
-	
+	monitering(&table, &(table.philo));
+
 	//joins
 	//fork destroy
 	return (EXIT_SUCCESS);
 }
 
+
+void	monitering(t_table *t, t_philo *p)
+{
+	while (true)
+	{
+		//
+	}
+}
+
 /**********//**********//**********//**********//**********/
+int	init_n_check(t_table *t, char **argv)
+{
+	if (!table_init(&table, argv))
+	{
+		check_n_cleanup("gettimeofday() error");
+		return (false);
+	}
+	if (!fork_init(&table))
+	{
+		check_n_cleanup("pthread_mutex_init() error");
+		return (false);
+	}
+	if (!philo_init(&table, &(table.philo)));
+	{
+		check_n_cleanup("pthread_create() error");
+		return (false);
+	}
+	return (true);
+}
+
 int	table_init(t_table *t, char **argv)
 {
 	if (gettimeofday(&t->start, NULL))
@@ -163,7 +193,10 @@ int	philo_init(t_table *t, t_philo *p)
 	while (i < 4)
 	{
 		if (pthread_create(&(p[i].me), NULL, routine, (void *)&(p[i])))
+		{
+			t->flag = EXTERNAL;
 			return (false);
+		}
 		t->check.philo_init++;
 		i++;
 	}
@@ -205,16 +238,14 @@ void	*routine(void *arg)
 			fork_lock_n_check(p->r_fork, p->l_fork, p);
 		else
 			fork_lock_n_check(p->l_fork, p->r_fork, p);
-		//eat
-		if (p->num % 2)
-			fork_unlock_n_check(p->r_fork, p->l_fork, p);
-		else
-			fork_unlock_n_check(p->l_fork, p->r_fork, p);
-		t->cnt[p->num - 1]++;
+		if (!eat(p, t))
+			break ;
 		if (t->flag)
 			break ;
-		//go to sleep
-		//thinking
+		if (!go_to_sleep(p, t))
+			break ;
+		if (!think(p, t))
+			break ;
 	}
 	return (NULL);
 }
@@ -223,11 +254,46 @@ void	*routine(void *arg)
 
 int	eat(t_philo *p, t_table *t)
 {
-	// 죽었는지 확인
-	// 시간체크 및 ate_ms update
-	// 출력
-	// usleep
-	// 2023.06.12 여기서부터 하면됨
+	if (t->flag)
+		return (false);
+	if (!get_now_ms(t, &(p->ate_ms)))
+		set_flag_n_usleep(t, INTERNAL);
+	if (t->flag)
+		return (false);
+	printf("%ld philo %d is eating\n", p->ate_ms, p->num);
+	usleep(1000 * t->t_eat);
+	if (p->num % 2)
+		fork_unlock_n_check(p->r_fork, p->l_fork, p);
+	else
+		fork_unlock_n_check(p->l_fork, p->r_fork, p);
+	t->cnt[p->num - 1]++;
+}
+
+int	go_to_sleep(t_philo *p, t_table *t)
+{
+	long	now;
+
+	if (t->flag)
+		return (false);
+	if (!get_now_ms(t, &now))
+		set_flag_n_usleep(t, INTERNAL);
+	if (t->flag)
+		return (false);
+	printf("%ld philo %d is sleeping\n", now, p->num);
+	usleep(1000 * t->t_sleep);
+}
+
+int	think(t_philo *p, t_table *t)
+{
+	long	now;
+
+	if (t->flag)
+		return (false);
+	if (!get_now_ms(t, &now))
+		set_flag_n_usleep(t, INTERNAL);
+	if (t->flag)
+		return (false);
+	printf("%ld philo %d is thinking\n", now, p->num);
 }
 
 /**********//**********//**********//**********//**********/
@@ -317,4 +383,5 @@ void	record_fork_unlock(t_philo *p, int right_handed, char c)
 		}
 	}
 }
+/**********//**********//**********//**********//**********/
 /**********//**********//**********//**********//**********/
