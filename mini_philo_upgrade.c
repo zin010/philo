@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 /**/#include <stdlib.h>/**/
 
@@ -9,9 +10,9 @@
 #define UNLOCK 0
 
 #define NOTHING 0
-#define DEATH 1
-#define EXTERNAL 2
-#define INTERNAL 3
+#define EXTERNAL 1
+#define INTERNAL 2
+#define END 3
 
 typedef struct s_checklist
 {
@@ -28,7 +29,7 @@ typedef struct s_philo
 	pthread_mutex_t	*r_fork;
 	long			ate_ms;
 	int				num;
-}
+}					t_philo;
 
 typedef struct s_table
 {
@@ -60,9 +61,13 @@ int		go_to_sleep(t_philo *p, t_table *t);
 int		think(t_philo *p, t_table *t);
 
 void	fork_lock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p);
-void	record_fork_lock(t_philo *p, int right_handed, char c);
+void	record_fork_lock(t_philo *p, int right_handed, char c, t_table *t);
 void	fork_unlock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p);
-void	record_fork_unlock(t_philo *p, int right_handed, char c);
+void	record_fork_unlock(t_philo *p, int right_handed, char c, t_table *t);
+
+void	monitering(t_table *t);
+int		is_alive(t_philo *p);
+void	check_n_print(long now, int d, int t);
 
 //
 
@@ -81,7 +86,7 @@ void	check_n_cleanup(t_table *t, char *s)
 	if (t->check.philo_init)
 	{
 		while (i < t->check.philo_init)
-			pthread_join(table.philo[i++].me, NULL);
+			pthread_join(t->philo[i++].me, NULL);
 		i = 0;
 	}
 	if (t->check.fork_init)
@@ -91,7 +96,7 @@ void	check_n_cleanup(t_table *t, char *s)
 		i = 0;
 	}
 	if (s)
-		printf("%s\n");
+		printf("%s\n", s);
 }
 /**********//**********//**********//**********//**********/
 
@@ -106,39 +111,28 @@ int	main(int argc, char **argv)
 	}
 	if (!init_n_check(&table, argv))
 		return (EXIT_FAILURE);
-	//monitering//
-	monitering(&table, &(table.philo));
-
-	//joins
-	//fork destroy
+	monitering(&table);
+	if (table.flag)
+		return (EXIT_FAILURE);
 	return (EXIT_SUCCESS);
-}
-
-
-void	monitering(t_table *t, t_philo *p)
-{
-	while (true)
-	{
-		//
-	}
 }
 
 /**********//**********//**********//**********//**********/
 int	init_n_check(t_table *t, char **argv)
 {
-	if (!table_init(&table, argv))
+	if (!table_init(t, argv))
 	{
-		check_n_cleanup("gettimeofday() error");
+		check_n_cleanup(t, "gettimeofday() error");
 		return (false);
 	}
-	if (!fork_init(&table))
+	if (!fork_init(t))
 	{
-		check_n_cleanup("pthread_mutex_init() error");
+		check_n_cleanup(t, "pthread_mutex_init() error");
 		return (false);
 	}
-	if (!philo_init(&table, &(table.philo)));
+	if (!philo_init(t, t->philo))
 	{
-		check_n_cleanup("pthread_create() error");
+		check_n_cleanup(t, "pthread_create() error");
 		return (false);
 	}
 	return (true);
@@ -183,9 +177,10 @@ int	philo_init(t_table *t, t_philo *p)
 	while (i < 4)
 	{
 		p[i].table = (void *)t;
-		p[i].l_fork = &(t_fork[i]);
+		p[i].l_fork = &(t->fork[i]);
 		p[i].ate_ms = t->start.tv_usec / 1000;
-		p[i].num = 1 + i++;
+		p[i].num = 1 + i;
+		i++;
 	}
 	while (--i > 0)
 		p[i].r_fork = &(t->fork[i - 1]);
@@ -207,7 +202,7 @@ int	philo_init(t_table *t, t_philo *p)
 void	set_flag_n_usleep(t_table *t, int n)
 {
 	t->flag = n;
-	usleep(1000);
+	usleep(100);
 }
 
 int	get_now_ms(t_table *t, long *now_ms)
@@ -216,7 +211,8 @@ int	get_now_ms(t_table *t, long *now_ms)
 
 	if (gettimeofday(&now, NULL))
 		return (false);
-	*now_ms = (now.tv_sec - t->start.tv_sec) * 1000 + now.tv_usec / 1000;
+	*now_ms = (now.tv_sec - t->start.tv_sec) * 1000;
+	*now_ms = *now_ms + (now.tv_usec - t->start.tv_usec) / 1000;
 	return (true);
 }
 
@@ -261,12 +257,13 @@ int	eat(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	printf("%ld philo %d is eating\n", p->ate_ms, p->num);
-	usleep(1000 * t->t_eat);
+	usleep(1000 * t->t_eat);// 오차 줄일려면 while 이용해서 50 ~ 200 단위로 끊기
 	if (p->num % 2)
 		fork_unlock_n_check(p->r_fork, p->l_fork, p);
 	else
 		fork_unlock_n_check(p->l_fork, p->r_fork, p);
 	t->cnt[p->num - 1]++;
+	return (true);
 }
 
 int	go_to_sleep(t_philo *p, t_table *t)
@@ -281,6 +278,7 @@ int	go_to_sleep(t_philo *p, t_table *t)
 		return (false);
 	printf("%ld philo %d is sleeping\n", now, p->num);
 	usleep(1000 * t->t_sleep);
+	return (true);
 }
 
 int	think(t_philo *p, t_table *t)
@@ -294,28 +292,31 @@ int	think(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	printf("%ld philo %d is thinking\n", now, p->num);
+	return (true);
 }
 
 /**********//**********//**********//**********//**********/
 
 void	fork_lock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p)
 {
+	t_table	*t;
 	int		right_handed;
 	long	now;
 
+	t = (t_table *)p->table;
 	right_handed = p->num % 2;
 	if (pthread_mutex_lock(f))
-		set_flag_n_usleep(t, INTERNAL);
-	record_fork_lock(p, right_handed, 'f');
+		set_flag_n_usleep(p->table, INTERNAL);
+	record_fork_lock(p, right_handed, 'f', t);
 	if (pthread_mutex_lock(s))
-		set_flag_n_usleep(t, INTERNAL);
-	record_fork_lock(p, right_handed, 's');
-	if (!get_now_ms(t, &now))
-		set_flag_n_usleep(t, INTERNAL);
+		set_flag_n_usleep(p->table, INTERNAL);
+	record_fork_lock(p, right_handed, 's', t);
+	if (!get_now_ms(p->table, &now))
+		set_flag_n_usleep(p->table, INTERNAL);
 	printf("%ld philo %d has taken a fork\n", now, p->num);
 }
 
-void	record_fork_lock(t_philo *p, int right_handed, char c)
+void	record_fork_lock(t_philo *p, int right_handed, char c, t_table *t)
 {
 	if (c == 'f')
 	{
@@ -345,18 +346,20 @@ void	record_fork_lock(t_philo *p, int right_handed, char c)
 
 void	fork_unlock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p)
 {
+	t_table	*t;
 	int		right_handed;
 
+	t = (t_table *)p->table;
 	right_handed = p->num % 2;
 	if (pthread_mutex_unlock(f))
 		set_flag_n_usleep(t, INTERNAL);
-	record_fork_unlock(p, right_handed, 'f');
+	record_fork_unlock(p, right_handed, 'f', t);
 	if (pthread_mutex_unlock(s))
 		set_flag_n_usleep(t, INTERNAL);
-	record_fork_unlock(p, right_handed, 's');
+	record_fork_unlock(p, right_handed, 's', t);
 }
 
-void	record_fork_unlock(t_philo *p, int right_handed, char c)
+void	record_fork_unlock(t_philo *p, int right_handed, char c, t_table *t)
 {
 	if (c == 'f')
 	{
@@ -384,4 +387,54 @@ void	record_fork_unlock(t_philo *p, int right_handed, char c)
 	}
 }
 /**********//**********//**********//**********//**********/
+void	monitering(t_table *t)
+{
+	long	now;
+	int		died;
+	int		i;
+
+	died = 0;
+	while (!died && !t->flag)
+	{
+		i = 0;
+		while (i < 4)
+		{
+			if (!is_alive(&(t->philo[i])))
+			{
+				died = i + 1;
+				break ;
+			}
+			//check_
+			i++;
+		}
+	}
+	usleep(1000);
+	check_n_cleanup(t, NULL);
+	if (!get_now_ms(t, &now))
+		set_flag_n_usleep(t, EXTERNAL);
+	check_n_print(now, died, t->flag);
+}
+
+int	is_alive(t_philo *p)
+{
+	long	now;
+	long	diff;
+	t_table	*t;
+
+	t = (t_table *)p->table;
+	get_now_ms(t, &now);
+	diff = now - p->ate_ms;
+	return (diff < t->t_die);
+}
+
+void	check_n_print(long now, int d, int t)
+{
+	if (t == EXTERNAL)
+		printf("error in main thread\n");
+	else if (t == INTERNAL)
+		printf("error in philo thread\n");
+	else
+		printf("%ld philo %d is died\n", now, d);
+}
+
 /**********//**********//**********//**********//**********/
