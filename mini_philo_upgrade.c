@@ -37,10 +37,10 @@ typedef struct s_table
 	pthread_mutex_t	fork[4];
 	int				cnt[4];
 	struct timeval	start;
-	long			t_die;
-	long			t_eat;
-	long			t_sleep;
-	long			m_eat;
+	int				t_die;
+	int				t_eat;
+	int				t_sleep;
+	int				m_eat;
 	int				flag;
 	t_checklist		check;
 }					t_table;
@@ -54,6 +54,7 @@ int		philo_init(t_table *t, t_philo *p);
 
 void	set_flag_n_usleep(t_table *t, int n);
 int		get_now_ms(t_table *t, long *now_ms);
+void	msleep(t_table *t, int m, long p, long n);
 void	*routine(void *arg);
 
 int		eat(t_philo *p, t_table *t);
@@ -67,6 +68,7 @@ void	record_fork_unlock(t_philo *p, int right_handed, char c, t_table *t);
 
 void	monitering(t_table *t);
 int		is_alive(t_philo *p);
+void	check_meal_over(t_table *t);
 void	check_n_print(long now, int d, int t);
 
 //
@@ -216,6 +218,29 @@ int	get_now_ms(t_table *t, long *now_ms)
 	return (true);
 }
 
+void	msleep(t_table *t, int m, long p, long n)
+{
+	struct timeval	prev;
+	struct timeval	next;
+	int				i;
+
+	i = 0;
+	while (i < m * 10)
+	{
+		gettimeofday(&prev, NULL);
+		while (true)
+		{
+			gettimeofday(&next, NULL);
+			p = (prev.tv_sec - t->start.tv_sec) * 1000 + prev.tv_usec / 1000;
+			n = (next.tv_sec - t->start.tv_sec) * 1000 + next.tv_usec / 1000;
+			if ((n - p) >= 100)
+				break ;
+			usleep(100);
+		}
+		i++;
+	}
+}
+
 //루틴은 !t->flag일 때만 실행되어야 함
 //  t->flag일 때 : philo n의 죽음 or thread 생성 오류 or must eat 달성
 //  죽음과 생성 오류, must eat 달성여부는 main thread에서 판단해줄 것
@@ -257,7 +282,7 @@ int	eat(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	printf("%ld philo %d is eating\n", p->ate_ms, p->num);
-	usleep(1000 * t->t_eat);// 오차 줄일려면 while 이용해서 50 ~ 200 단위로 끊기
+	msleep(t, t->t_eat, 0, 0);
 	if (p->num % 2)
 		fork_unlock_n_check(p->r_fork, p->l_fork, p);
 	else
@@ -277,7 +302,7 @@ int	go_to_sleep(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	printf("%ld philo %d is sleeping\n", now, p->num);
-	usleep(1000 * t->t_sleep);
+	msleep(t, t->t_sleep, 0, 0);
 	return (true);
 }
 
@@ -404,7 +429,7 @@ void	monitering(t_table *t)
 				died = i + 1;
 				break ;
 			}
-			//check_
+			//check_meal_over(t);
 			i++;
 		}
 	}
@@ -425,6 +450,17 @@ int	is_alive(t_philo *p)
 	get_now_ms(t, &now);
 	diff = now - p->ate_ms;
 	return (diff < t->t_die);
+}
+
+void	check_meal_over(t_table *t)
+{
+	int	i;
+
+	i = 0;
+	while (i < 4 && t->cnt[i] >= t->m_eat)
+		i++;
+	if (i == 3)
+		t->flag = END;
 }
 
 void	check_n_print(long now, int d, int t)
