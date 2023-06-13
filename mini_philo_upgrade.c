@@ -54,7 +54,7 @@ int		philo_init(t_table *t, t_philo *p);
 
 void	set_flag_n_usleep(t_table *t, int n);
 int		get_now_ms(t_table *t, long *now_ms);
-void	msleep(t_table *t, int m, long p, long n);
+void	msleep(t_table *t, t_philo *p, int m);
 void	*routine(void *arg);
 
 int		eat(t_philo *p, t_table *t);
@@ -114,7 +114,7 @@ int	main(int argc, char **argv)
 	if (!init_n_check(&table, argv))
 		return (EXIT_FAILURE);
 	monitering(&table);
-	if (table.flag)
+	if (table.flag == EXTERNAL || table.flag == INTERNAL)
 		return (EXIT_FAILURE);
 	return (EXIT_SUCCESS);
 }
@@ -218,28 +218,29 @@ int	get_now_ms(t_table *t, long *now_ms)
 	return (true);
 }
 
-void	msleep(t_table *t, int m, long p, long n)
+void	msleep(t_table *t, t_philo *p, int m)
 {
-	struct timeval	prev;
-	struct timeval	next;
+	long			now;
 	int				i;
 
 	i = 0;
-	while (i < m * 10)
+	while (true)
 	{
-		gettimeofday(&prev, NULL);
-		while (true)
-		{
-			gettimeofday(&next, NULL);
-			p = (prev.tv_sec - t->start.tv_sec) * 1000 + prev.tv_usec / 1000;
-			n = (next.tv_sec - t->start.tv_sec) * 1000 + next.tv_usec / 1000;
-			if ((n - p) >= 100)
-				break ;
-			usleep(100);
-		}
-		i++;
+		get_now_ms(t, &now);
+		if ((now - p->ate_ms) >= m)
+			break ;
+		usleep(200);
 	}
 }
+// m = 53 > 53000
+// 53000 / 100 = 530
+// 100 * 530 = 53000
+// 200 = 2
+// 53 = 5.3
+// 현재 문제 : philo 1만 루틴실행 왜?
+//             t_die * 2가 지나서야 죽음 알림 왜??????
+//             죽고나서 무언가 출력됨
+//             get_now_ms 에러처리 통
 
 //루틴은 !t->flag일 때만 실행되어야 함
 //  t->flag일 때 : philo n의 죽음 or thread 생성 오류 or must eat 달성
@@ -282,7 +283,7 @@ int	eat(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	printf("%ld philo %d is eating\n", p->ate_ms, p->num);
-	msleep(t, t->t_eat, 0, 0);
+	msleep(t, p, t->t_eat);
 	if (p->num % 2)
 		fork_unlock_n_check(p->r_fork, p->l_fork, p);
 	else
@@ -302,7 +303,7 @@ int	go_to_sleep(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	printf("%ld philo %d is sleeping\n", now, p->num);
-	msleep(t, t->t_sleep, 0, 0);
+	msleep(t, p, t->t_sleep);
 	return (true);
 }
 
@@ -429,7 +430,7 @@ void	monitering(t_table *t)
 				died = i + 1;
 				break ;
 			}
-			//check_meal_over(t);
+			check_meal_over(t);
 			i++;
 		}
 	}
@@ -469,6 +470,8 @@ void	check_n_print(long now, int d, int t)
 		printf("error in main thread\n");
 	else if (t == INTERNAL)
 		printf("error in philo thread\n");
+	else if (t == END)
+		return ;
 	else
 		printf("%ld philo %d is died\n", now, d);
 }
