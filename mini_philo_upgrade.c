@@ -227,7 +227,7 @@ void	msleep(t_table *t, t_philo *p, int m)
 	while (true)
 	{
 		get_now_ms(t, &now);
-		if ((now - p->ate_ms) >= m)
+		if ((now - p->ate_ms) >= m)//slept_ms 추가 해서 eat ate 각자 시간에 맞춰서 계산되도록 변경!
 			break ;
 		usleep(200);
 	}
@@ -283,12 +283,14 @@ int	eat(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	printf("%ld philo %d is eating\n", p->ate_ms, p->num);
+//usleep(1000 * t->t_eat);
 	msleep(t, p, t->t_eat);
 	if (p->num % 2)
 		fork_unlock_n_check(p->r_fork, p->l_fork, p);
 	else
 		fork_unlock_n_check(p->l_fork, p->r_fork, p);
 	t->cnt[p->num - 1]++;
+printf("\t\t\tphilo %d %d\n", p->num, t->cnt[p->num - 1]);
 	return (true);
 }
 
@@ -303,6 +305,7 @@ int	go_to_sleep(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	printf("%ld philo %d is sleeping\n", now, p->num);
+//usleep(1000 * t->t_sleep);
 	msleep(t, p, t->t_sleep);
 	return (true);
 }
@@ -460,7 +463,7 @@ void	check_meal_over(t_table *t)
 	i = 0;
 	while (i < 4 && t->cnt[i] >= t->m_eat)
 		i++;
-	if (i == 3)
+	if (i == 4)
 		t->flag = END;
 }
 
