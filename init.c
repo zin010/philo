@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 14:19:42 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/15 16:45:48 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/16 19:16:08 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,11 @@ int	table_init(t_table *t, char **argv)
 	t->flag = NOTHING;
 	t->check.fork_init = 0;
 	t->check.philo_init = 0;
+	t->check.key_init = 0;
+	if (pthread_mutex_init(&t->key, NULL))
+		return (false);
+	t->check.key_init++;
+	t->check.key_state = UNLOCK;
 	return (true);
 }
 
@@ -97,6 +102,7 @@ int	philo_init(t_table *t, t_philo **p)
 		p[i]->slept_ms = t->start.tv_usec / 1000;
 		p[i]->num = i + 1;
 		p[i]->l_fork = t->fork[i];
+		p[i]->key = &t->key;
 		i++;
 	}
 	while (--i > 0)
@@ -115,10 +121,7 @@ int	philo_create(t_table *t, t_philo **p)
 	while (i < t->n_of_p)
 	{
 		if (pthread_create(&p[i]->me, NULL, routine, (void *)p[i]))
-		{
-			t->flag = EXTERNAL;
 			return (false);
-		}
 		t->check.philo_init++;
 		i++;
 	}

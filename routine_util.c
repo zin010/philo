@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 16:05:40 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/15 16:44:04 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/16 18:12:35 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ void	set_flag_n_usleep(t_table *t, int n)
 	usleep(100);
 }
 
-int	get_now_ms(t_table *t, long *now_ms)
+int	get_now_ms(t_table *t, long *now_ms)///;
 {
 	struct timeval	now;
 

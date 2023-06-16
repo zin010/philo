@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 16:17:53 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/15 16:47:45 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/16 19:22:04 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ void	monitering(t_table *t)
 		i = 0;
 		while (i < t->n_of_p)
 		{
-			if (!is_alive(t->philo[i]))
+			if (!is_alive(t, t->philo[i]))
 			{
 				died = i + 1;
 				break ;
@@ -38,15 +38,17 @@ void	monitering(t_table *t)
 	check_n_print(t, died, t->flag);
 }
 
-int	is_alive(t_philo *p)
+int	is_alive(t_table *t, t_philo *p)//////
 {
 	long	now;
 	long	diff;
-	t_table	*t;
 
-	t = (t_table *)p->table;
 	get_now_ms(t, &now);
+	pthread_mutex_lock(&t->key);//
+	t->check.key_state = LOCK;
 	diff = now - p->ate_ms;
+	pthread_mutex_unlock(&t->key);//
+	t->check.key_state = UNLOCK;
 	return (diff < t->t_die);
 }
 
@@ -66,11 +68,7 @@ void	check_n_print(t_table *t, int d, int n)
 	long	now;
 
 	get_now_ms(t, &now);
-	if (n == EXTERNAL)
-		printf("error in main thread\n");
-	else if (n == INTERNAL)
-		printf("error in philo thread\n");
-	else if (n == END)
+	if (n)
 		return ;
 	else
 		printf("%ld %d is died\n", now, d);

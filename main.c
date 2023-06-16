@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 14:15:34 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/15 16:46:16 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/16 19:17:28 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,36 +16,39 @@ int	main(int argc, char **argv)
 {
 	t_table	table;
 
+	memset((void *)&table, 0, sizeof(t_table));
 	if (argc < 5)
 	{
-		check_n_cleanup(&table, "arguments error");
+		printf("arguments error\n");
 		return (EXIT_FAILURE);
 	}
 	if (!init_n_check(&table, argv))
 		return (EXIT_FAILURE);
 	monitering(&table);
-	if (table.flag > 1)
-		return (EXIT_FAILURE);
 	return (EXIT_SUCCESS);
 }
 
-void	check_n_cleanup(t_table *t, char *s)
+void	check_n_cleanup(t_table *t, char *s)///;
 {
 	int	i;
 
 	i = 0;
-	while (i < t->n_of_p)
+	if (t->check.key_init && t->check.key_state)
+		pthread_mutex_unlock(&t->key);
+	while (t->check.fork_state && i < t->n_of_p)
 	{
 		if (t->check.fork_state[i])
 			pthread_mutex_unlock(t->fork[i]);
 		i++;
 	}
 	i = 0;
-	while (i < t->check.philo_init)
-		pthread_join(t->philo[i]->me, NULL);
+	while (t->philo && i < t->check.philo_init)
+		pthread_join(t->philo[i++]->me, NULL);
 	i = 0;
-	while (i < t->check.fork_init)
+	while (t->fork && i < t->check.fork_init)
 		pthread_mutex_destroy(t->fork[i++]);
+	if (t->check.key_init)
+		pthread_mutex_destroy(&t->key);
 	free_table(t);
 	if (s)
 		printf("%s\n", s);
@@ -53,18 +56,22 @@ void	check_n_cleanup(t_table *t, char *s)
 
 void	free_table(t_table *t)
 {
-	int	i;
+	int	i; 
 
 	i = 0;
-	while (i < t->check.philo_init)
+	while (t->philo && i < t->check.philo_init)
 		free(t->philo[i++]);
 	i = 0;
-	while (i < t->check.fork_init)
+	while (t->fork && i < t->check.fork_init)
 		free(t->fork[i++]);
-	free(t->philo);
-	free(t->fork);
-	free(t->check.fork_state);
-	free(t->cnt);
+	if (t->philo)
+		free(t->philo);
+	if (t->fork)
+		free(t->fork);
+	if (t->check.fork_state)
+		free(t->check.fork_state);
+	if (t->cnt)
+		free(t->cnt);
 }
 
 int	is_white(char c)

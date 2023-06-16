@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 15:32:34 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/15 16:16:17 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/16 19:27:28 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ void	*routine(void *arg)
 	return (NULL);
 }
 
-int	eat(t_philo *p, t_table *t)
+int	eat(t_philo *p, t_table *t)///;
 {
 	if (t->flag)
 		return (false);
@@ -48,12 +48,13 @@ int	eat(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	printf("%ld %d is eating\n", p->ate_ms, p->num);
+//printf("\t\t\t%d eat %d times\n", p->num, t->cnt[p->num - 1] + 1);
 	msleep(t, p, t->t_eat, 'e');
+	t->cnt[p->num - 1]++;
 	if (p->num % 2)
 		fork_unlock_n_check(p->r_fork, p->l_fork, p);
 	else
 		fork_unlock_n_check(p->l_fork, p->r_fork, p);
-	t->cnt[p->num - 1]++;
 	return (true);
 }
 
@@ -62,7 +63,7 @@ int	go_to_sleep(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	get_now_ms(t, &(p->slept_ms));
-	if (!t->flag)
+	if (t->flag)
 		return (false);
 	printf("%ld %d is sleeping\n", p->slept_ms, p->num);
 	msleep(t, p, t->t_sleep, 's');

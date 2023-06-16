@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 14:05:18 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/15 16:48:04 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/16 19:16:46 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include <sys/time.h>
 # include <stdio.h>
 # include <stdlib.h>
+# include <string.h>
 # include <stdbool.h>
 
 # define LOCK 1
@@ -25,14 +26,14 @@
 
 # define NOTHING 0
 # define END 1
-# define EXTERNAL 2
-# define INTERNAL 3
 
 typedef struct s_checklist
 {
+	int	key_init;
+	int	key_state;
 	int	fork_init;
-	int	philo_init;
 	int	*fork_state;
+	int	philo_init;
 }		t_checklist;
 
 typedef struct s_philo
@@ -44,6 +45,7 @@ typedef struct s_philo
 	long			ate_ms;
 	long			slept_ms;
 	int				num;
+	pthread_mutex_t	*key;
 }					t_philo;
 
 typedef struct s_table
@@ -59,6 +61,7 @@ typedef struct s_table
 	int				m_eat;
 	int				flag;
 	t_checklist		check;
+	pthread_mutex_t	key;
 }					t_table;
 
 void	check_n_cleanup(t_table *t, char *s);
@@ -87,7 +90,7 @@ int		get_now_ms(t_table *t, long *now_ms);
 void	msleep(t_table *t, t_philo *p, int m, char c);
 
 void	monitering(t_table *t);
-int		is_alive(t_philo *p);
+int		is_alive(t_table *t, t_philo *p);
 void	check_meal_over(t_table *t);
 void	check_n_print(t_table *t, int d, int n);
 
