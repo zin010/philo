@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 16:17:53 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/16 19:22:04 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/17 16:21:29 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ void	monitering(t_table *t)
 			if (!is_alive(t, t->philo[i]))
 			{
 				died = i + 1;
+				t->flag = DIED;
 				break ;
 			}
 			if (t->m_eat)
@@ -68,8 +69,8 @@ void	check_n_print(t_table *t, int d, int n)
 	long	now;
 
 	get_now_ms(t, &now);
-	if (n)
+	if (n == END)
 		return ;
 	else
-		printf("%ld %d is died\n", now, d);
+		printf("%ld %d died\n", now, d);
 }

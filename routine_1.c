@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 15:32:34 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/16 19:27:28 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/17 17:44:31 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,5 +80,6 @@ int	think(t_philo *p, t_table *t)
 	if (t->flag)
 		return (false);
 	printf("%ld %d is thinking\n", now, p->num);
+	usleep(500);
 	return (true);
 }

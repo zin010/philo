@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 14:05:18 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/16 19:16:46 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/17 15:20:32 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 
 # define NOTHING 0
 # define END 1
+# define DIED 2
 
 typedef struct s_checklist
 {
