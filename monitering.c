@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 16:17:53 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/17 16:21:29 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/18 13:13:38 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,9 +34,8 @@ void	monitering(t_table *t)
 			i++;
 		}
 	}
-	usleep(100);
-	check_n_cleanup(t, NULL);
 	check_n_print(t, died, t->flag);
+	check_n_cleanup(t, NULL);
 }
 
 int	is_alive(t_table *t, t_philo *p)//////
@@ -50,7 +49,7 @@ int	is_alive(t_table *t, t_philo *p)//////
 	diff = now - p->ate_ms;
 	pthread_mutex_unlock(&t->key);//
 	t->check.key_state = UNLOCK;
-	return (diff < t->t_die);
+	return (diff <= t->t_die);
 }
 
 void	check_meal_over(t_table *t)

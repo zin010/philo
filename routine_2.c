@@ -6,7 +6,7 @@
 /*   By: jikang2 <jikang2@student.42seoul.k>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/15 15:48:42 by jikang2           #+#    #+#             */
-/*   Updated: 2023/06/16 19:13:28 by jikang2          ###   ########.fr       */
+/*   Updated: 2023/06/18 12:54:20 by jikang2          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,8 @@ void	fork_lock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p)
 	pthread_mutex_lock(s);
 	record_fork_lock(p, right_handed, 's', t);
 	get_now_ms(p->table, &now);
-	printf("%ld %d has taken a fork\n", now, p->num);
+	if (!t->flag)
+		printf("%ld %d has taken a fork\n", now, p->num);
 }
 
 void	record_fork_lock(t_philo *p, int right_handed, char c, t_table *t)///;
