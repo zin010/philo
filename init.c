@@ -36,8 +36,7 @@ int	table_init(t_table *t, char **argv)
 {
 	int	i;
 
-	if (gettimeofday(&t->start, NULL))
-		return (false);
+	gettimeofday(&t->start, NULL);
 	i = 0;
 	while (++i <= 5 && argv[i])
 	{
@@ -98,8 +97,8 @@ int	philo_init(t_table *t, t_philo **p)
 		if (!p[i])
 			return (false);
 		p[i]->table = (void *)t;
-		p[i]->ate_ms = t->start.tv_usec / 1000;
-		p[i]->slept_ms = t->start.tv_usec / 1000;
+		p[i]->ate_ms = 0;
+		p[i]->slept_ms = 0;
 		p[i]->num = i + 1;
 		p[i]->l_fork = t->fork[i];
 		p[i]->key = &t->key;
