@@ -76,8 +76,9 @@ typedef struct s_table
 	pthread_mutex_t	**key_ate;
 	pthread_mutex_t	**key_cnt;
 	pthread_mutex_t	**key_flag;
+	int				flag;
 	t_ref			ref;
 	t_checklist		check;
-}                   t_table;
+}				   	t_table;
 
 #endif
