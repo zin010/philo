@@ -19,5 +19,20 @@ int	init_n_check(t_table *t, char **argv)
 		check_n_cleanup(t, "table_init() error");
 		return (false);
 	}
-	//
+	if (!fork_init(t))
+    {
+        check_n_cleanup(t, "fork_init() error");
+        return (false);
+    }
+    if (!philo_init(t, t->philo))
+    {
+        check_n_cleanup(t, "philo_init() error");
+        return (false);
+    }
+    return (true);
+}
+
+int table_init(t_table *t, char **argv)
+{
+    int i;
 }

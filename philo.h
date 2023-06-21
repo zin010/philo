@@ -63,7 +63,7 @@ typedef struct s_philo
 	long			slept_ms;
 	pthread_mutex_t	*l_fork;
 	pthread_mutex_t	*r_fork;
-	pthread_mutex_t	*key_ate;;
+	pthread_mutex_t	*key_ate;
 	pthread_mutex_t	*key_cnt;
 	pthread_mutex_t	*key_flag;
 	t_ref			ref;
@@ -78,6 +78,6 @@ typedef struct s_table
 	pthread_mutex_t	**key_flag;
 	t_ref			ref;
 	t_checklist		check;
-}
+}                   t_table;
 
 #endif
