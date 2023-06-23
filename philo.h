@@ -46,10 +46,6 @@ typedef struct s_checklist
 	int	ate_init;
 	int	cnt_init;
 	int	flag_init;
-	int	*fork_state;
-	int	*ate_state;
-	int	*cnt_state;
-	int	*flag_state;
 }		t_checklist;
 
 typedef struct s_philo
@@ -63,6 +59,8 @@ typedef struct s_philo
 	long			slept_ms;
 	pthread_mutex_t	*l_fork;
 	pthread_mutex_t	*r_fork;
+	int				l_state;
+	int				r_state;
 	pthread_mutex_t	*m_ate;
 	pthread_mutex_t	*m_cnt;
 	pthread_mutex_t	*m_flag;
@@ -85,21 +83,33 @@ void	get_now_ms(long s_sec, long s_usec, long *now_ms);
 int		is_white(char c);
 int		ft_atoi(char *str);
 
-void	check_n_cleanup(t_table *t, char *s, int i);
+void	check_n_cleanup(t_table *t, char *s);
 void	free_table(t_table *t);
 void	free_table_util(t_table *t);
 
 int		init_n_check(t_table *t, char **argv);
 int		table_init(t_table *t, char **argv);
 int		table_alloc(t_table *t);
+
 int		fork_init(t_table *t);
 int		philo_init(t_table *t, t_philo **p);
-int		philo_create(t_table *t, t_philo **p);
+int		philo_create(t_table *t, t_philo **p, int i);
 
 void	monitering(t_table *t);
 int		is_alive(t_table *t, t_philo *p, int i);
 void	set_all_flags(t_table *t, t_philo **p);
 void	check_meal_over(t_table *t);
 void	print_n_cleanup(t_table *t, int died, long d_time);
+
+void	*routine(void *arg);
+int		eat(t_philo *p);
+int		go_to_sleep(t_philo *p);
+int		think(t_philo *p);
+
+void	fork_lock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p);
+void	fork_unlock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p);
+void	check_unlockable(t_philo *p);
+void	msleep(t_philo *p, int time, long ms);
+int		get_flag(t_philo *p);
 
 #endif

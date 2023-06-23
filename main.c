@@ -24,7 +24,7 @@ int	main(int argc, char **argv)
 	memset((void *)&table, 0, sizeof(t_table));
 	if (!init_n_check(&table, argv))
 		return (EXIT_FAILURE);
-	monitering(t);
+	monitering(&table);
 	return (EXIT_SUCCESS);
 }
 
@@ -32,7 +32,7 @@ void	get_now_ms(long s_sec, long s_usec, long *now_ms)
 {
 	struct timeval	now;
 
-	gettimeofday(&now, NULL)
+	gettimeofday(&now, NULL);
 	*now_ms = (now.tv_sec - s_sec) * 1000 + (now.tv_usec - s_usec) / 1000;
 }
 

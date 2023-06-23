@@ -55,25 +55,21 @@ int	philo_init(t_table *t, t_philo **p)
 		p[i]->table = (void *)t;
 		p[i]->ate_ms = 0;
 		p[i]->slept_ms = 0;
+		p[i]->l_state = UNLOCK;
+		p[i]->r_state = UNLOCK;
 		p[i]->l_fork = t->fork[i];
 		p[i]->m_ate = t->m_ate[i];
 		p[i]->m_cnt = t->m_cnt[i];
 		p[i]->m_flag = t->m_flag[i];
 		i++;
 	}
-	if (!philo_create(t, p))
+	if (!philo_create(t, p, 0))
 		return (false);
 	return (true);
 }
 
-int	philo_create(t_table *t, t_philo **p)
+int	philo_create(t_table *t, t_philo **p, int i)
 {
-	int	i;
-
-	i = t->ref.n_of_p;
-	while (--i > 0)
-		p[i]->r_fork = t->fork[i - 1];
-	p[0]->r_fork = t->fork[t->ref.n_of_p - 1];
 	while (i < t->ref.n_of_p)
 	{
 		p[i]->ref.s_sec = t->ref.s_sec;
@@ -85,6 +81,9 @@ int	philo_create(t_table *t, t_philo **p)
 		p[i]->ref.m_eat = t->ref.m_eat;
 		i++;
 	}
+	while (--i > 0)
+	p[i]->r_fork = t->fork[i - 1];
+	p[0]->r_fork = t->fork[t->ref.n_of_p - 1];
 	while (i < t->ref.n_of_p)
 	{
 		if (pthread_create(&p[i]->me, NULL, routine, (void *)p[i]))
