@@ -19,9 +19,23 @@ void	fork_lock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p)
 
 	right_handed = p->num % 2;
 	pthread_mutex_lock(f);
-	p->l_state = LOCK;
+	if (right_handed)
+		p->r_state = LOCK;
+	else
+		p->l_state = LOCK;
+	if (p->ref.n_of_p == 1)
+	{
+		while (true)
+		{
+			if (get_flag(p))
+				return ;
+		}
+	}
 	pthread_mutex_lock(s);
-	p->r_state = LOCK;
+	if (right_handed)
+		p->l_state = LOCK;
+	else
+		p->r_state = LOCK;
 	get_now_ms(p->ref.s_sec, p->ref.s_usec, &now);
 	if (!p->flag)
 		printf("%ld %d has taken a fork\n", now, p->num);

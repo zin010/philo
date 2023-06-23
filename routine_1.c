@@ -26,6 +26,8 @@ void	*routine(void *arg)
 			usleep(10);
 			fork_lock_n_check(p->l_fork, p->r_fork, p);
 		}
+		if (p->ref.n_of_p == 1)
+			break ;
 		if (!eat(p))
 			break ;
 		if (get_flag(p))
