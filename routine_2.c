@@ -37,7 +37,7 @@ void	fork_lock_n_check(pthread_mutex_t *f, pthread_mutex_t *s, t_philo *p)
 	else
 		p->r_state = LOCK;
 	get_now_ms(p->ref.s_sec, p->ref.s_usec, &now);
-	if (!p->flag)
+	if (!get_flag(p))
 		printf("%ld %d has taken a fork\n", now, p->num);
 }
 

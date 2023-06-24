@@ -69,18 +69,23 @@ void	set_all_flags(t_table *t, t_philo **p)
 void	check_meal_over(t_table *t)
 {
 	int	i;
+	int	over;
 
+	over = 0;
 	i = 0;
-	while (i != -1 && i < t->ref.n_of_p)
+	while (!over && i < t->ref.n_of_p)
 	{
 		pthread_mutex_lock(t->m_cnt[i]);
 		if (t->philo[i]->cnt < t->ref.m_eat)
-			i = -2;
+			over = 1;
 		pthread_mutex_unlock(t->m_cnt[i]);
 		i++;
 	}
 	if (i == t->ref.n_of_p)
+	{
 		t->flag = END;
+		set_all_flags(t, t->philo);
+	}
 }
 
 void	print_n_cleanup(t_table *t, int died, long d_time)
